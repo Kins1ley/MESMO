@@ -53,16 +53,18 @@ def multi_output_gassian(train_x, train_y):
     for i in range(num_obj):
         non_shared_nns += [dsk.NN(non_shared_layers_sizes, non_shared_activations)]
     modsk = dsk.MODSK(train_x, train_y, shared_nn, non_shared_nns, debug=True, max_iter=max_iter, l1=l1, l2=l2)
+    theta = modsk.rand_theta(scale=scale)
+    modsk.fit(theta)
 
     return modsk
 
 
 paths='.'
 dim = 4
-total_iterations = 1
+total_iterations = 20
 seed = 0
 np.random.seed(seed)
-intial_number = 1
+intial_number = 2
 bound = [0,1]
 sample_number = 1
 Fun_bounds = [bound] * dim
@@ -89,6 +91,7 @@ referencePoint = [float(total_cell_area_max), float(total_power_max), float(all_
 feature = mat[:,:4]
 target = mat[:, 4:7]
 num_target = target.shape[1]
+num_sample = target.shape[0]
 print(num_target)
 # total_power = mat[:,5]
 # total_power_max = np.max(total_power)
@@ -108,18 +111,18 @@ Multiplemes = []
 
 for k in range(intial_number):
     exist = True
-    while exist:
+    while exist :
         design_index = np.random.randint(0, mat.shape[0] - 1)
         x_rand = feature[design_index, :].tolist()
         #print(x_rand)
-        if (any((x_rand == x).all() for x in xValues)) == False:
+        if (any((x_rand == np.array(x)).all() for x in xValues)) == False:
             exist = False
         xValues.append(x_rand)
         yValues.append(target[design_index, :].tolist())
 
-print(design_index)
-print(np.asarray(xValues).T.shape)
-print(np.asarray(yValues).shape)
+# print(design_index)
+# print(np.asarray(xValues).T.shape)
+# print(np.asarray(yValues).shape)
 
 GP_model = multi_output_gassian(np.asarray(xValues).T, np.asarray(yValues))
 for i in range(target.shape[1]):
@@ -131,7 +134,7 @@ for j in range(np.asarray(yValues).shape[0]):
 input_output.close()
 
 for l in range(total_iterations):
-
+    print('iteration', l)
     for i in range(num_target):
         Multiplemes[i] = MaxvalueEntropySearch(GP_model, np.asarray(xValues), np.asarray(yValues)[:, i], dim)
         Multiplemes[i].Sampling_RFM()
@@ -160,22 +163,28 @@ for l in range(total_iterations):
 
     def mesmo_acq(x):
         multi_obj_acq_total = 0
+        mean, std = GP_model.predict(x.reshape(x.shape[0], 1))
         for j in range(sample_number):
             multi_obj_acq_sample = 0
             for i in range(num_target):
-                multi_obj_acq_sample = multi_obj_acq_sample + Multiplemes[i].single_acq(x, max_samples[j][i])
+                multi_obj_acq_sample = multi_obj_acq_sample + Multiplemes[i].single_acq(mean[0][i], std[0][i], max_samples[j][i])
             multi_obj_acq_total = multi_obj_acq_total + multi_obj_acq_sample
         return (multi_obj_acq_total / sample_number)
 
 
     x_tries = feature
+    # y_tries = [mesmo_acq(x) for x in x_tries]
+    #y_tries = []
+    #mean, std = GP_model.mix_predict(K=4, x=x_tries.T, scale=1)
     y_tries = [mesmo_acq(x) for x in x_tries]
+    print('y_tries', y_tries)
     sorted_indecies = np.argsort(y_tries)
     i = 0
-    x_best = x_tries[sorted_indecies[i]].tolist()
-    while (any((x_best == x).all() for x in xValues)):
+    x_best = x_tries[sorted_indecies[i]]
+    while (any((x_best == np.array(x)).all() for x in xValues)):
         i = i + 1
         x_best = x_tries[sorted_indecies[i]]
+    #print(sorted_indecies[i])
     y_best = y_tries[sorted_indecies[i]]
     x_seed = list(feature)
     index = find_neighbor(feature, x_best)
@@ -191,11 +200,15 @@ for l in range(total_iterations):
         if ((result.fun <= y_best) and (not (feature_value in np.asarray(xValues)))):
             #print('result.x', result.x)
             x_best = feature_value
+            print('x_best', x_best)
             #print('x_best', x_best)
             y_best = result.fun
+            print('y_best', y_best)
 
     xValues.append(x_best.tolist())
     yValues.append(target[np.where((feature == x_best).all(1))[0][0], :].tolist())
+    print(xValues)
+    print(yValues)
 
     GP_model = multi_output_gassian(np.asarray(xValues).T, np.asarray(yValues))
     # for i in range(num_target):
@@ -207,10 +220,10 @@ for l in range(total_iterations):
     input_output.write(str(np.asarray(xValues)[-1])+'---'+str(np.asarray(yValues)[-1]) +'\n' )
     input_output.close()
 
-    current_hypervolume = open(os.path.join(paths, 'hypervolumes_small_design.txt'), "a")
-    simple_pareto_front_evaluations = list(zip(*[GPs[i].yValues for i in range(num_target)]))
-    print(simple_pareto_front_evaluations)
-    print("hypervolume ", hypervolume(-1 * (np.asarray(simple_pareto_front_evaluations))).compute(referencePoint))
-    current_hypervolume.write(
-        '%f \n' % hypervolume(-1 * (np.asarray(simple_pareto_front_evaluations))).compute(referencePoint))
-    current_hypervolume.close()
+    # current_hypervolume = open(os.path.join(paths, 'hypervolumes_small_design.txt'), "a")
+    # simple_pareto_front_evaluations = list(zip(*[GPs[i].yValues for i in range(num_target)]))
+    # print(simple_pareto_front_evaluations)
+    # print("hypervolume ", hypervolume(-1 * (np.asarray(simple_pareto_front_evaluations))).compute(referencePoint))
+    # current_hypervolume.write(
+    #     '%f \n' % hypervolume(-1 * (np.asarray(simple_pareto_front_evaluations))).compute(referencePoint))
+    # current_hypervolume.close()

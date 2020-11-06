@@ -1,0 +1,11 @@
+conf = {}
+conf["num_shared_layer"] = 2
+conf["num_non_shared_layer"] = 2
+conf["hidden_shared"] = 50
+conf["hidden_non_shared"] = 50
+conf["l1"] = 0.0
+conf["l2"] = 0.0
+conf["scale"] = 1
+conf["max_iter"] = 100
+conf["K"] = 4
+conf["activation"] = "relu"

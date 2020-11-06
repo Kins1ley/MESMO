@@ -7,16 +7,13 @@ Created on Mon Oct 29 14:34:01 2018
 #import math
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, Matern
-from sklearn.gaussian_process.kernels import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared , DotProduct, ConstantKernel as C
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel,Matern
 #import logging
 
 class GaussianProcess:
     def __init__(self, dim):
         self.dim = dim
-        #self.kernel =  RBF(length_scale=1, length_scale_bounds=(1e-3, 1e2))   #Problem 4
-        #self.kernel =  C(1.0, (1e-3, 1000)) * DotProduct(1.0,(1e-5, 1e5)) + WhiteKernel(0.1, (1e-3, 1000))
-        self.kernel=Matern(nu=2.5)
+        self.kernel =  RBF(length_scale=1, length_scale_bounds=(1e-3, 1e2))
         self.beta=1e6
         self.xValues = []
         self.yValues = []

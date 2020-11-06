@@ -35,9 +35,8 @@ nd_raw_data = file_to_DataFrame(inputfile).values    #numpy ndarray, 5000 x 38
 N = nd_raw_data.shape[0]
 feature = nd_raw_data[:,:4]
 feature_name = ['place_freq', 'place_rcfactor', 'place_global_max_density', 'max_transition']
-
-#for i in range(len(feature_name)):
-#    feature[:, i] = normalize(feature[:, i], parameter_bounds_small_design[feature_name[i]][0], parameter_bounds_small_design[feature_name[i]][1])
+for i in range(len(feature_name)):
+    feature[:, i] = normalize(feature[:, i], parameter_bounds_small_design[feature_name[i]][0], parameter_bounds_small_design[feature_name[i]][1])
 
 #print(feature)
 

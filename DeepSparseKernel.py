@@ -433,13 +433,13 @@ class MODSK:
             theta   = self.rand_theta(scale=scale)
             self.fit(theta)
             py_i, ps2_i  = self.predict(x)
-            pys         += [py_i]
-            ps2s        += [ps2_i]
-            losses      += [self.best_loss[0][0]]
-        py  = np.zeros((x.shape[1], self.num_obj))
+            pys += [py_i]
+            ps2s += [ps2_i]
+            losses += [self.best_loss[0][0]]
+        py = np.zeros((x.shape[1], self.num_obj))
         ps2 = np.zeros((x.shape[1], self.num_obj))
         for i in range(K):
-            py  += pys[i] / K;
+            py += pys[i] / K
             ps2 += (ps2s[i] + pys[i]**2) / K
         ps2 -= py**2
         print("losses:")
